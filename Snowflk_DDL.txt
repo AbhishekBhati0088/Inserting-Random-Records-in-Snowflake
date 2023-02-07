@@ -1,0 +1,100 @@
+--Creating a Table--
+
+create or replace TABLE MY_DB.PUBLIC.MY_TABLE_1 ( COL_1 NUMBER(38,0), COL_2 NUMBER(19,0), COL_3 NUMBER(22,0), COL_4 VARCHAR(100), COL_5 TIMESTAMP_NTZ(9) );
+
+
+--Function--
+
+create or replace function prepare_seed_stmt1(t string, ddl string)
+  RETURNS string
+  LANGUAGE JAVASCRIPT
+AS
+$$
+const regex = /^\t(.*?) (.*?)(?: |,|\n)/gm;
+
+const expressions = {
+    "string": "randstr(5, random()) ",
+    "number": "uniform(0::float, 1::float, random())",
+    "object": "object_construct(randstr(5, random()), uniform(1, 10, random(12)))",
+    "ts_ntz": "dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz)",
+    "array": "array_construct(uniform(1, 10, random(12))",
+    "decimal": "uniform(1, 10, random(12))",
+    "numeric": "uniform(1, 10, 1234)",
+    "integer": "uniform(1, 10, random(12))",
+    "binary": "TO_BINARY(randstr(5, random())) ",
+    "boolean": "TO_BOOLEAN(randstr(5, random())) ",
+    "date": "dateadd(second, uniform(-1e6, 1e6, random())",
+    "ts_ltz": " to_timestamp_ltz(dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz))"
+}
+
+const mapping = {
+    "FLOAT": "number",
+    "NUMBER": "integer",
+    "BIGINT": "integer",
+    "SMALLINT": "integer",
+    "DOUBLE": "number",
+    "double precision": "number",
+    "REAL": "number",
+    "VARCHAR": "string",
+    "CHAR": "string",
+    "STRING": "string",
+    "TEXT": "string",
+    "OBJECT": "object",
+    "ARRAY": "array",
+    "DECIMAL": "decimal",
+    "NUMERIC": "numeric",
+    "INTEGER": "integer",
+    "FLOAT4": "number",
+    "FLOAT8": "number",
+    "BINARY": "binary",
+    "VARBINARY": "binary",
+    "boolean": "boolean",
+    "date": "date",
+    "TIMESTAMP_NTZ": "ts_ntz",
+    "TIMESTAMP_LTZ": "ts_ltz"
+    
+}
+
+let m;
+
+let sql = `insert into ${T} from\nselect \n`;
+
+while ((m = regex.exec(DDL)) !== null) {
+    if (m.index === regex.lastIndex) {
+        regex.lastIndex++;
+    }
+
+    sql += `${expressions[mapping[m[2].replace(/\(|\)|[0-9]/g, '')]]} ${m[1]},\n`
+}
+
+sql = sql.slice(0, -2)
+
+sql += "\nfrom table(generator(rowcount => 10));"
+
+return sql
+$$
+;
+
+
+--Calling the Function--
+
+select prepare_seed_stmt1('MY_TABLE_1', get_ddl('table', 'MY_TABLE_1'));
+
+
+--Inserting the Data--
+
+insert into MY_TABLE_1
+select 
+uniform(1, 10, random(12)) COL_1,
+uniform(1, 10, random(12)) COL_2,
+uniform(1, 10, random(12)) COL_3,
+randstr(5, random())  COL_4,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_5
+from table(generator(rowcount => 50));
+
+
+--Desc Table--
+
+DESC TABLE MY_TABLE_1;
+
+Select count(1) from MY_TABLE_1;

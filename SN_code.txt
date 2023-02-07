@@ -1,0 +1,100 @@
+create or replace function prepare_seed_stmt(t string, ddl string)
+  RETURNS string
+  LANGUAGE JAVASCRIPT
+AS
+$$
+const regex = /^\t(.*?) (.*?)(?: |,|\n)/gm;
+
+const expressions = {
+    "string": "randstr(5, random()) ",
+    "number": "uniform(0::float, 1::float, random())",
+    "object": "object_construct(randstr(5, random()), uniform(1, 10, random(12)))",
+    "ts_ntz": "dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz)",
+    "array": "array_construct(uniform(1, 10, random(12))",
+    "decimal": "ROUND(uniform(1, 10, random(12)))",
+    "numeric": "uniform(1, 10, 1234)",
+    "integer": "uniform(1, 10, random(12))",
+    "binary": "TO_BINARY(randstr(5, random())) ",
+    "boolean": "TO_BOOLEAN(randstr(5, random())) ",
+    "date": "dateadd(second, uniform(-1e6, 1e6, random())",
+    "ts_ltz": " to_timestamp_ntz(dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz))"
+}
+
+const mapping = {
+    "FLOAT": "number",
+    "NUMBER": "integer",
+    "BIGINT": "integer",
+    "SMALLINT": "integer",
+    "DOUBLE": "number",
+    "double precision": "number",
+    "REAL": "number",
+    "VARCHAR": "string",
+    "CHAR": "string",
+    "STRING": "string",
+    "TEXT": "string",
+    "OBJECT": "object",
+    "ARRAY": "array",
+    "DECIMAL": "decimal",
+    "NUMERIC": "numeric",
+    "INTEGER": "integer",
+    "FLOAT4": "number",
+    "FLOAT8": "number",
+    "BINARY": "binary",
+    "VARBINARY": "binary",
+    "boolean": "boolean",
+    "date": "date",
+    "TIMESTAMP_NTZ": "ts_ntz",
+    "TIMESTAMP_LTZ": "ts_ltz"
+    
+}
+
+let m;
+
+let sql = `insert into ${T} from\nselect \n`;
+
+while ((m = regex.exec(DDL)) !== null) {
+    if (m.index === regex.lastIndex) {
+        regex.lastIndex++;
+    }
+
+    sql += `${expressions[mapping[m[2].replace(/\(|\)|[0-9]/g, '')]]} ${m[1]},\n`
+}
+
+sql = sql.slice(0, -2)
+
+sql += "\nfrom table(generator(rowcount => 10));"
+
+return sql
+$$
+;
+
+
+
+______________________________________________________________________________________
+
+
+insert into SRC_TEST_40M 
+select 
+uniform(1, 10, random(12)) a,
+randstr(5, random())  b,
+randstr(5, random())  c,
+randstr(5, random())  d,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) e,
+randstr(5, random())  f,
+uniform(1, 10, random(12)) g,
+object_construct(randstr(5, random()), uniform(1, 10, random(12))) h,
+object_construct(randstr(5, random()), uniform(1, 10, random(12))) i,
+object_construct(randstr(5, random()), uniform(1, 10, random(12))) j,
+object_construct(randstr(5, random()), uniform(1, 10, random(12))) k,
+randstr(5, random())  l,
+randstr(5, random())  m,
+object_construct(randstr(5, random()), uniform(1, 10, random(12))) n,
+object_construct(randstr(5, random()), uniform(1, 10, random(12))) o,
+randstr(5, random())  p,
+uniform(1, 10, random(12)) q,
+randstr(5, random())  r,
+uniform(1, 10, random(12)) s,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) t
+from table(generator(rowcount => 10));
+
+

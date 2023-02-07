@@ -1,0 +1,231 @@
+insert into SRC_TEST_40M 
+select 
+uniform(1, 10, random(12)) COL_1,
+uniform(1, 10, random(12)) COL_2,
+uniform(1, 10, random(12)) COL_3,
+randstr(5, random())  COL_4,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_5,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_6,
+uniform(1, 10, random(12)) COL_7,
+uniform(0::float, 1::float, random()) COL_8,
+uniform(0::float, 1::float, random()) COL_9,
+randstr(5, random()) COL_10,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_11,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_12,
+uniform(0::float, 1::float, random()) COL_13,
+uniform(0::float, 1::float, random())  COL_14,
+uniform(0::float, 1::float, random())  COL_15,
+randstr(5, random())  COL_16,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz)  COL_17,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz)  COL_18,
+uniform(1, 10, random(12))  COL_19,
+uniform(1, 10, random(12))  COL_20,
+uniform(1, 10, random(12)) COL_21,
+randstr(5, random()) COL_22,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_23,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_24,
+uniform(1, 100, random(12)) COL_25,
+uniform(2, 100, random(15)) COL_26,
+uniform(3, 100, random(20)) COL_27,
+randstr(5, random()) COL_28,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_29,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_30,
+uniform(0::float, 1::float, random()) COL_31,
+uniform(0::float, 1::float, random()) COL_32,
+uniform(0::float, 1::float, random()) COL_33,
+randstr(5, random()) COL_34,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_35,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_36,
+uniform(0::float, 1::float, random()) COL_37,
+uniform(1, 100, random(12))  COL_38,
+uniform(1, 100, random(12))  COL_39,
+randstr(5, random())  COL_40,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz)  COL_41,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz)  COL_42,
+uniform(1, 100, random(12))  COL_43,
+uniform(1, 100, random(12))  COL_44,
+uniform(1, 100, random(12)) COL_45,
+randstr(5, random()) COL_46,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_47,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_48,
+uniform(1, 100, random(12)) COL_49
+
+
+from table(generator(rowcount => 10));
+
+
+
+
+randstr(5, random())  f,
+uniform(1, 10, random(12)) g,
+object_construct(randstr(5, random()), uniform(1, 10, random(12))) h,
+object_construct(randstr(5, random()), uniform(1, 10, random(12))) i,
+object_construct(randstr(5, random()), uniform(1, 10, random(12))) j,
+object_construct(randstr(5, random()), uniform(1, 10, random(12))) k,
+randstr(5, random())  l,
+randstr(5, random())  m,
+object_construct(randstr(5, random()), uniform(1, 10, random(12))) n,
+object_construct(randstr(5, random()), uniform(1, 10, random(12))) o,
+randstr(5, random())  p,
+uniform(1, 10, random(12)) q,
+randstr(5, random())  r,
+uniform(1, 10, random(12)) s,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) t
+from table(generator(rowcount => 10));
+
+
+-----------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------
+
+
+create or replace function prepare_seed_stmt1(t string, ddl string)
+  RETURNS string
+  LANGUAGE JAVASCRIPT
+AS
+$$
+const regex = /^\t(.*?) (.*?)(?: |,|\n)/gm;
+
+const expressions = {
+    "string": "randstr(5, random()) ",
+    "number": "uniform(0::float, 1::float, random())",
+    "object": "object_construct(randstr(5, random()), uniform(1, 10, random(12)))",
+    "ts_ntz": "dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz)",
+    "array": "array_construct(uniform(1, 10, random(12))",
+    "decimal": "uniform(1, 10, random(12))",
+    "numeric": "uniform(1, 10, 1234)",
+    "integer": "uniform(1, 10, random(12))",
+    "binary": "TO_BINARY(randstr(5, random())) ",
+    "boolean": "TO_BOOLEAN(randstr(5, random())) ",
+    "date": "dateadd(second, uniform(-1e6, 1e6, random())",
+    "ts_ltz": " to_timestamp_ltz(dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz))"
+}
+
+const mapping = {
+    "FLOAT": "number",
+    "NUMBER": "integer",
+    "BIGINT": "integer",
+    "SMALLINT": "integer",
+    "DOUBLE": "number",
+    "double precision": "number",
+    "REAL": "number",
+    "VARCHAR": "string",
+    "CHAR": "string",
+    "STRING": "string",
+    "TEXT": "string",
+    "OBJECT": "object",
+    "ARRAY": "array",
+    "DECIMAL": "decimal",
+    "NUMERIC": "numeric",
+    "INTEGER": "integer",
+    "FLOAT4": "number",
+    "FLOAT8": "number",
+    "BINARY": "binary",
+    "VARBINARY": "binary",
+    "boolean": "boolean",
+    "date": "date",
+    "TIMESTAMP_NTZ": "ts_ntz",
+    "TIMESTAMP_LTZ": "ts_ltz"
+    
+}
+
+let m;
+
+let sql = `insert into ${T} from\nselect \n`;
+
+while ((m = regex.exec(DDL)) !== null) {
+    if (m.index === regex.lastIndex) {
+        regex.lastIndex++;
+    }
+
+    sql += `${expressions[mapping[m[2].replace(/\(|\)|[0-9]/g, '')]]} ${m[1]},\n`
+}
+
+sql = sql.slice(0, -2)
+
+sql += "\nfrom table(generator(rowcount => 10));"
+
+return sql
+$$
+;
+
+
+select prepare_seed_stmt1('SRC_TABLE_1', get_ddl('table', 'SRC_TABLE_1'));
+
+
+insert into SRC_TABLE_1
+select 
+uniform(1, 10, random(12)) COL_1,
+uniform(1, 10, random(12)) COL_2,
+uniform(1, 10, random(12)) COL_3,
+randstr(5, random())  COL_4,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_5,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_6,
+uniform(1, 10, random(12)) COL_7,
+uniform(0::float, 1::float, random()) COL_8,
+uniform(0::float, 1::float, random()) COL_9,
+randstr(5, random()) COL_10,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_11,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_12,
+uniform(0::float, 1::float, random()) COL_13,
+uniform(0::float, 1::float, random())  COL_14,
+uniform(0::float, 1::float, random())  COL_15,
+randstr(5, random())  COL_16,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz)  COL_17,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz)  COL_18,
+uniform(1, 10, random(12))  COL_19,
+uniform(1, 10, random(12))  COL_20,
+uniform(1, 10, random(12)) COL_21,
+randstr(5, random()) COL_22,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_23,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_24,
+uniform(1, 100, random(12)) COL_25,
+uniform(2, 100, random(15)) COL_26,
+uniform(3, 100, random(20)) COL_27,
+randstr(5, random()) COL_28,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_29,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_30,
+uniform(0::float, 1::float, random()) COL_31,
+uniform(0::float, 1::float, random()) COL_32,
+uniform(0::float, 1::float, random()) COL_33,
+randstr(5, random()) COL_34,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_35,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_36,
+uniform(0::float, 1::float, random()) COL_37,
+uniform(1, 100, random(12))  COL_38,
+uniform(1, 100, random(12))  COL_39,
+randstr(5, random())  COL_40,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz)  COL_41,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz)  COL_42,
+uniform(1, 100, random(12))  COL_43,
+uniform(1, 100, random(12))  COL_44,
+uniform(1, 100, random(12)) COL_45,
+randstr(5, random()) COL_46,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_47,
+dateadd(second, uniform(-1e6, 1e6, random()), current_timestamp::timestamp_ntz) COL_48,
+uniform(1, 100, random(12)) COL_49
+from table(generator(rowcount => 20000000));
+
+--------------------------------------------------------------
+DROP TABLE TGT_TABLE_1;
+
+create or replace TABLE STRIIM.PUBLIC.TGT_TABLE_1 ( COL_1 NUMBER(38,0), COL_2 NUMBER(19,0), COL_3 NUMBER(22,0), COL_4 VARCHAR(100), COL_5 TIMESTAMP_NTZ(9), COL_6 TIMESTAMP_NTZ(9), COL_7 NUMBER(38,0), COL_8 NUMBER(19,0), COL_9 NUMBER(22,0), COL_10 VARCHAR(100), COL_11 TIMESTAMP_NTZ(9), COL_12 TIMESTAMP_NTZ(9), COL_13 NUMBER(38,0), COL_14 NUMBER(19,0), COL_15 NUMBER(22,0), COL_16 VARCHAR(100), COL_17 TIMESTAMP_NTZ(9), COL_18 TIMESTAMP_NTZ(9), COL_19 NUMBER(38,0), COL_20 NUMBER(19,0), COL_21 NUMBER(22,0), COL_22 VARCHAR(100), COL_23 TIMESTAMP_NTZ(9), COL_24 TIMESTAMP_NTZ(9), COL_25 NUMBER(38,0), COL_26 NUMBER(19,0), COL_27 NUMBER(22,0), COL_28 VARCHAR(100), COL_29 TIMESTAMP_NTZ(9), COL_30 TIMESTAMP_NTZ(9), COL_31 NUMBER(38,0), COL_32 NUMBER(19,0), COL_33 NUMBER(22,0), COL_34 VARCHAR(100), COL_35 TIMESTAMP_NTZ(9), COL_36 TIMESTAMP_NTZ(9), COL_37 NUMBER(38,0), COL_38 NUMBER(19,0), COL_39 NUMBER(22,0), COL_40 VARCHAR(100), COL_41 TIMESTAMP_NTZ(9), COL_42 TIMESTAMP_NTZ(9), COL_43 NUMBER(38,0), COL_44 NUMBER(19,0), COL_45 NUMBER(22,0), COL_46 VARCHAR(100), COL_47 TIMESTAMP_NTZ(9), COL_48 TIMESTAMP_NTZ(9), COL_49 NUMBER(38,0));
+
+-------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE TABLE SRC_TABLE_1_temp LIKE SRC_TABLE_1;
+
+CREATE OR REPLACE SEQUENCE uniqueIDseq12;
+
+ALTER TABLE SRC_TABLE_1_temp
+ADD COLUMN ID_1 int DEFAULT uniqueIDseq12.nextval;
+
+INSERT INTO SRC_TABLE_1_temp
+SELECT *, uniqueIDseq12.nextval 
+FROM SRC_TABLE_1;
+
+DROP TABLE SRC_TABLE_1;
+
+ALTER TABLE SRC_TABLE_1_temp RENAME TO SRC_TABLE_1;
+
+SELECT * FROM TGT_TABLE_1 LIMIT 10;
